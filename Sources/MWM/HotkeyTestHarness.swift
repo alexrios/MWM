@@ -250,6 +250,9 @@ class HotkeyTestHarness {
         // Window control tests
         allPassed = testWindowControls() && allPassed
 
+        // Workspace tests
+        allPassed = testWorkspaceControls() && allPassed
+
         disableTestMode()
 
         printSummary()
@@ -370,6 +373,41 @@ class HotkeyTestHarness {
         return true
     }
 
+    private func testWorkspaceControls() -> Bool {
+        print("📋 Testing Workspace (Space) Controls")
+        print(String(repeating: "-", count: 60))
+
+        // Test switching to spaces
+        let switchTests: [(CGKeyCode, String)] = [
+            (0x12, "Cmd+1 (switch to space 1)"),
+            (0x13, "Cmd+2 (switch to space 2)"),
+            (0x14, "Cmd+3 (switch to space 3)")
+        ]
+
+        for (keyCode, desc) in switchTests {
+            simulateHotkey(keyCode: keyCode, modifiers: .maskCommand, description: desc)
+            // Add delay between space switches to allow animation
+            Thread.sleep(forTimeInterval: 0.5)
+        }
+
+        print("\n📋 Testing Window Movement to Spaces")
+        print(String(repeating: "-", count: 60))
+
+        // Test moving windows to spaces
+        let moveTests: [(CGKeyCode, String)] = [
+            (0x13, "Cmd+Shift+2 (move window to space 2)"),
+            (0x12, "Cmd+Shift+1 (move window to space 1)")
+        ]
+
+        for (keyCode, desc) in moveTests {
+            simulateHotkey(keyCode: keyCode, modifiers: [.maskCommand, .maskShift], description: desc)
+            Thread.sleep(forTimeInterval: 0.3)
+        }
+
+        print()
+        return true
+    }
+
     /// Test focus cycling workflow (Cmd+j repeatedly)
     func testFocusCycleWorkflow() {
         enableTestMode()
@@ -411,6 +449,34 @@ class HotkeyTestHarness {
         print("\nStep 3: Retile layout (Cmd+r)")
         simulateHotkey(keyCode: 0x0F, modifiers: .maskCommand, description: "Cmd+r")
         Thread.sleep(forTimeInterval: 0.5)
+
+        disableTestMode()
+        printSummary()
+    }
+
+    /// Test workspace switching workflow
+    func testWorkspaceWorkflow() {
+        enableTestMode()
+
+        print("\n" + String(repeating: "=", count: 60))
+        print("🧪 WORKSPACE WORKFLOW TEST")
+        print(String(repeating: "=", count: 60) + "\n")
+
+        print("Step 1: Switch to Space 2 (Cmd+2)")
+        simulateHotkey(keyCode: 0x13, modifiers: .maskCommand, description: "Cmd+2")
+        Thread.sleep(forTimeInterval: 1.0)  // Wait for space transition
+
+        print("\nStep 2: Switch to Space 3 (Cmd+3)")
+        simulateHotkey(keyCode: 0x14, modifiers: .maskCommand, description: "Cmd+3")
+        Thread.sleep(forTimeInterval: 1.0)
+
+        print("\nStep 3: Move window to Space 1 (Cmd+Shift+1)")
+        simulateHotkey(keyCode: 0x12, modifiers: [.maskCommand, .maskShift], description: "Cmd+Shift+1")
+        Thread.sleep(forTimeInterval: 0.5)
+
+        print("\nStep 4: Follow to Space 1 (Cmd+1)")
+        simulateHotkey(keyCode: 0x12, modifiers: .maskCommand, description: "Cmd+1")
+        Thread.sleep(forTimeInterval: 1.0)
 
         disableTestMode()
         printSummary()

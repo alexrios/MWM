@@ -16,7 +16,10 @@ let package = Package(
         .executableTarget(
             name: "MWM",
             dependencies: ["MWMCore"],
-            path: "Sources/MWM"
+            path: "Sources/MWM",
+            linkerSettings: [
+                .linkedFramework("CoreGraphics")
+            ]
         ),
         .systemLibrary(
             name: "MWMCore",

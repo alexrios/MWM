@@ -1,6 +1,10 @@
 import Cocoa
 import ApplicationServices
 
+// Private API to get CGWindowID from AXUIElement
+@_silgen_name("_AXUIElementGetWindow")
+func _AXUIElementGetWindow(_ element: AXUIElement, _ windowID: UnsafeMutablePointer<UInt32>) -> AXError
+
 class WindowObserver {
     private let bridge: WindowManagerBridge
     private var observers: [AXObserver] = []
@@ -297,6 +301,23 @@ class WindowObserver {
         return windowElements[windowId]
     }
 
+    // Get the CGWindowID (macOS window ID) from MWM's internal window ID
+    func getCGWindowID(_ windowId: UInt64) -> UInt32? {
+        guard let element = windowElements[windowId] else {
+            return nil
+        }
+
+        // Use private _AXUIElementGetWindow API to get CGWindowID
+        var cgWindowID: UInt32 = 0
+        let result = _AXUIElementGetWindow(element, &cgWindowID)
+
+        if result == .success {
+            return cgWindowID
+        }
+
+        return nil
+    }
+
     // Focus a specific window by ID
     func focusWindow(_ windowId: UInt64) -> Bool {
         guard let windowElement = windowElements[windowId] else {
@@ -319,6 +340,32 @@ class WindowObserver {
             print("✗ Failed to focus window \(windowId)")
         }
         return success
+    }
+
+    // Sync focused window from system (detects which window macOS considers focused)
+    func syncFocusedWindowFromSystem() -> Bool {
+        guard let systemFocusedWindow = WindowController.getFocusedWindow() else {
+            print("  ⚠️  No window is focused in the system")
+            return false
+        }
+
+        // Try to match the system-focused window to one of our tracked windows
+        for (windowId, windowElement) in windowElements {
+            // Compare AXUIElements by getting their CGWindowIDs
+            var ourWindowID: UInt32 = 0
+            var systemWindowID: UInt32 = 0
+
+            if _AXUIElementGetWindow(windowElement, &ourWindowID) == .success,
+               _AXUIElementGetWindow(systemFocusedWindow, &systemWindowID) == .success,
+               ourWindowID == systemWindowID {
+                focusedWindowId = windowId
+                print("  ✅ Synced focus: Window \(windowId) (CGWindowID: \(ourWindowID))")
+                return true
+            }
+        }
+
+        print("  ⚠️  System-focused window is not managed by MWM")
+        return false
     }
 
     // Get list of all window IDs (in insertion order)

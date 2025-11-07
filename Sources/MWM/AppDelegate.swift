@@ -7,7 +7,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var accessibilityManager: AccessibilityManager!
     var windowObserver: WindowObserver!
     var hotkeyManager: HotkeyManager!
+    var spaceManager: SpaceManager!
     var testHarness: HotkeyTestHarness?
+    var spaceManagerTest: SpaceManagerTest?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Hide dock icon - menu bar app only
@@ -27,9 +29,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(NSMenuItem(title: "Request Accessibility Permission", action: #selector(requestAccessibility), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "Show Hotkeys", action: #selector(showHotkeys), keyEquivalent: ""))
         menu.addItem(NSMenuItem.separator())
-        menu.addItem(NSMenuItem(title: "Test: Run Automated Hotkey Tests", action: #selector(runAllHotkeyTests), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Test: Run All Hotkey Tests", action: #selector(runAllHotkeyTests), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Test: Workspace Workflow", action: #selector(runWorkspaceWorkflow), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Test: SpaceManager Diagnostic", action: #selector(runSpaceManagerDiagnostic), keyEquivalent: ""))
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Debug: Print Windows", action: #selector(debugPrintWindows), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Debug: Print Space Info", action: #selector(debugPrintSpaceInfo), keyEquivalent: ""))
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "q"))
 
@@ -59,8 +64,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         windowObserver = WindowObserver(bridge: windowManager)
         windowObserver.start()
 
-        // Set up hotkey manager
-        hotkeyManager = HotkeyManager(windowManager: windowManager, windowObserver: windowObserver)
+        // Initialize space manager
+        spaceManager = SpaceManager()
+        spaceManager.printSpaceInfo()
+
+        // Set up hotkey manager with space manager
+        hotkeyManager = HotkeyManager(windowManager: windowManager, windowObserver: windowObserver, spaceManager: spaceManager)
         if hotkeyManager.start() {
             print("✓ Hotkeys enabled")
             hotkeyManager.printRegisteredHotkeys()
@@ -75,6 +84,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             windowManager: windowManager
         )
         hotkeyManager.testHarness = testHarness
+
+        // Initialize space manager test
+        spaceManagerTest = SpaceManagerTest(spaceManager: spaceManager)
 
         print("Window management started")
         print("Window count after startup: \(windowManager.getWindowCount())")
@@ -223,6 +235,100 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         alert.messageText = "Test Harness Not Available"
         alert.informativeText = "Test harness is not initialized. Make sure accessibility permissions are granted and window management is running."
         alert.alertStyle = .warning
+        alert.runModal()
+    }
+
+    @objc func runWorkspaceWorkflow() {
+        guard let harness = testHarness else {
+            showTestHarnessNotAvailable()
+            return
+        }
+
+        let alert = NSAlert()
+        alert.messageText = "Run Workspace Workflow Test?"
+        alert.informativeText = """
+        This will test workspace switching and window movement:
+        • Switch between Spaces 1, 2, 3
+        • Move window to different Space
+        • Follow window to new Space
+
+        Make sure you have at least 3 Spaces created in Mission Control.
+        Watch terminal output for details.
+        """
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "Run Test")
+        alert.addButton(withTitle: "Cancel")
+
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {
+            DispatchQueue.global(qos: .userInitiated).async {
+                harness.testWorkspaceWorkflow()
+            }
+        }
+    }
+
+    @objc func runSpaceManagerDiagnostic() {
+        guard let test = spaceManagerTest else {
+            let alert = NSAlert()
+            alert.messageText = "SpaceManager Test Not Available"
+            alert.informativeText = "SpaceManager test is not initialized."
+            alert.alertStyle = .warning
+            alert.runModal()
+            return
+        }
+
+        let alert = NSAlert()
+        alert.messageText = "Run SpaceManager Diagnostic?"
+        alert.informativeText = """
+        This will test the CGS private API integration:
+        • Check if SkyLight framework loaded
+        • Verify space detection
+        • Test space switching capabilities
+
+        This helps diagnose if workspace features are working.
+        Watch terminal output for detailed results.
+        """
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "Run Diagnostic")
+        alert.addButton(withTitle: "Run Full Tests")
+        alert.addButton(withTitle: "Cancel")
+
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {
+            // Quick diagnostic
+            DispatchQueue.global(qos: .userInitiated).async {
+                test.runQuickDiagnostic()
+            }
+        } else if response == .alertSecondButtonReturn {
+            // Full test suite
+            DispatchQueue.global(qos: .userInitiated).async {
+                let _ = test.runAllTests()
+            }
+        }
+    }
+
+    @objc func debugPrintSpaceInfo() {
+        guard let sm = spaceManager else {
+            let alert = NSAlert()
+            alert.messageText = "SpaceManager Not Initialized"
+            alert.informativeText = "SpaceManager is not running."
+            alert.alertStyle = .warning
+            alert.runModal()
+            return
+        }
+
+        print("\n=== Manual Debug Request ===")
+        sm.printSpaceInfo()
+        sm.forceRefreshSpaces()
+
+        let alert = NSAlert()
+        alert.messageText = "Space Information"
+        alert.informativeText = """
+        Space information printed to console.
+
+        Check Console.app or terminal output.
+        """
+        alert.alertStyle = .informational
         alert.runModal()
     }
 

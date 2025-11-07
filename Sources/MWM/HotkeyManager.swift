@@ -49,6 +49,9 @@ enum HotkeyAction {
     case focusRight
     case focusUp
     case focusDown
+    // Workspace (Space) operations
+    case switchToSpace(Int)
+    case moveWindowToSpace(Int)
 
     var description: String {
         switch self {
@@ -71,6 +74,8 @@ enum HotkeyAction {
         case .focusRight: return "Focus Window Right"
         case .focusUp: return "Focus Window Up"
         case .focusDown: return "Focus Window Down"
+        case .switchToSpace(let num): return "Switch to Space \(num)"
+        case .moveWindowToSpace(let num): return "Move Window to Space \(num)"
         }
     }
 }
@@ -81,13 +86,15 @@ class HotkeyManager {
     private var runLoopSource: CFRunLoopSource?
     private var windowManager: WindowManagerBridge
     private weak var windowObserver: WindowObserver?
+    private var spaceManager: SpaceManager?
 
     // Test harness for automated testing
     weak var testHarness: HotkeyTestHarness?
 
-    init(windowManager: WindowManagerBridge, windowObserver: WindowObserver) {
+    init(windowManager: WindowManagerBridge, windowObserver: WindowObserver, spaceManager: SpaceManager? = nil) {
         self.windowManager = windowManager
         self.windowObserver = windowObserver
+        self.spaceManager = spaceManager
         registerDefaultHotkeys()
     }
 
@@ -135,7 +142,29 @@ class HotkeyManager {
         hotkeys[Hotkey(keyCode: 0x31, modifiers: [.command, .shift])] = .toggleFloating  // Cmd+Shift+Space
         hotkeys[Hotkey(keyCode: 0x03, modifiers: [.command, .shift])] = .quit            // Cmd+Shift+f (close - similar to i3's Mod+Shift+q)
 
-        print("Registered \(hotkeys.count) default hotkeys (i3wm-style)")
+        // WORKSPACE (SPACE) SWITCHING - Cmd+1 through Cmd+9
+        hotkeys[Hotkey(keyCode: 0x12, modifiers: [.command])] = .switchToSpace(1)  // Cmd+1
+        hotkeys[Hotkey(keyCode: 0x13, modifiers: [.command])] = .switchToSpace(2)  // Cmd+2
+        hotkeys[Hotkey(keyCode: 0x14, modifiers: [.command])] = .switchToSpace(3)  // Cmd+3
+        hotkeys[Hotkey(keyCode: 0x15, modifiers: [.command])] = .switchToSpace(4)  // Cmd+4
+        hotkeys[Hotkey(keyCode: 0x17, modifiers: [.command])] = .switchToSpace(5)  // Cmd+5
+        hotkeys[Hotkey(keyCode: 0x16, modifiers: [.command])] = .switchToSpace(6)  // Cmd+6
+        hotkeys[Hotkey(keyCode: 0x1A, modifiers: [.command])] = .switchToSpace(7)  // Cmd+7
+        hotkeys[Hotkey(keyCode: 0x1C, modifiers: [.command])] = .switchToSpace(8)  // Cmd+8
+        hotkeys[Hotkey(keyCode: 0x19, modifiers: [.command])] = .switchToSpace(9)  // Cmd+9
+
+        // MOVE WINDOW TO SPACE - Cmd+Shift+1 through Cmd+Shift+9
+        hotkeys[Hotkey(keyCode: 0x12, modifiers: [.command, .shift])] = .moveWindowToSpace(1)  // Cmd+Shift+1
+        hotkeys[Hotkey(keyCode: 0x13, modifiers: [.command, .shift])] = .moveWindowToSpace(2)  // Cmd+Shift+2
+        hotkeys[Hotkey(keyCode: 0x14, modifiers: [.command, .shift])] = .moveWindowToSpace(3)  // Cmd+Shift+3
+        hotkeys[Hotkey(keyCode: 0x15, modifiers: [.command, .shift])] = .moveWindowToSpace(4)  // Cmd+Shift+4
+        hotkeys[Hotkey(keyCode: 0x17, modifiers: [.command, .shift])] = .moveWindowToSpace(5)  // Cmd+Shift+5
+        hotkeys[Hotkey(keyCode: 0x16, modifiers: [.command, .shift])] = .moveWindowToSpace(6)  // Cmd+Shift+6
+        hotkeys[Hotkey(keyCode: 0x1A, modifiers: [.command, .shift])] = .moveWindowToSpace(7)  // Cmd+Shift+7
+        hotkeys[Hotkey(keyCode: 0x1C, modifiers: [.command, .shift])] = .moveWindowToSpace(8)  // Cmd+Shift+8
+        hotkeys[Hotkey(keyCode: 0x19, modifiers: [.command, .shift])] = .moveWindowToSpace(9)  // Cmd+Shift+9
+
+        print("Registered \(hotkeys.count) default hotkeys (i3wm-style + workspace switching)")
     }
 
     func start() -> Bool {
@@ -311,6 +340,13 @@ class HotkeyManager {
 
         case .focusDown:
             focusWindowInDirection(.down)
+
+        // Workspace operations
+        case .switchToSpace(let number):
+            switchToSpace(number)
+
+        case .moveWindowToSpace(let number):
+            moveWindowToSpace(number)
         }
     }
 
@@ -610,8 +646,17 @@ class HotkeyManager {
         case 0x04: return "H"
         case 0x0C: return "Q"
         case 0x0F: return "R"
+        case 0x12: return "1"
+        case 0x13: return "2"
+        case 0x14: return "3"
+        case 0x15: return "4"
+        case 0x16: return "6"
+        case 0x17: return "5"
         case 0x18: return "="
+        case 0x19: return "9"
+        case 0x1A: return "7"
         case 0x1B: return "-"
+        case 0x1C: return "8"
         case 0x25: return "L"
         case 0x26: return "J"
         case 0x28: return "K"
@@ -622,5 +667,87 @@ class HotkeyManager {
         case 0x7E: return "↑"
         default: return "Key(\(keyCode))"
         }
+    }
+
+    // MARK: - Workspace Operations
+
+    private func switchToSpace(_ number: Int) {
+        guard let spaceManager = spaceManager else {
+            print("SpaceManager not available")
+            return
+        }
+
+        print("Switching to space \(number)")
+        spaceManager.switchToSpaceNumber(number)
+    }
+
+    private func moveWindowToSpace(_ number: Int) {
+        print("\n🎬 DEBUG: HotkeyManager.moveWindowToSpace called")
+        print("  Requested space number: \(number)")
+
+        guard let spaceManager = spaceManager else {
+            print("  ❌ SpaceManager not available")
+            return
+        }
+        print("  ✅ SpaceManager available")
+
+        guard let observer = windowObserver else {
+            print("  ❌ WindowObserver not available")
+            return
+        }
+        print("  ✅ WindowObserver available")
+
+        // Try to get MWM's internally tracked focused window
+        var windowId = observer.focusedWindowId
+
+        // If MWM hasn't tracked a focused window yet, sync from system
+        if windowId == nil {
+            print("  ⚙️  MWM hasn't tracked a focused window yet, syncing from system...")
+            if observer.syncFocusedWindowFromSystem() {
+                windowId = observer.focusedWindowId
+            }
+        }
+
+        guard let windowId = windowId else {
+            print("  ❌ No focused window found")
+            print("  💡 Make sure a window is focused and managed by MWM")
+            return
+        }
+        print("  ✅ Focused window ID (MWM internal): \(windowId)")
+
+        // Get window element to extract CGWindowID and frame
+        guard let windowElement = observer.getWindowElement(windowId) else {
+            print("  ❌ Could not get window element for window \(windowId)")
+            return
+        }
+        print("  ✅ Got window element")
+
+        // Get the CGWindowID from the window element
+        var cgWindowID: UInt32 = 0
+        let result = _AXUIElementGetWindow(windowElement, &cgWindowID)
+        guard result == .success else {
+            print("  ❌ Could not get CGWindowID from window element")
+            return
+        }
+        print("  ✅ Real macOS CGWindowID: \(cgWindowID)")
+
+        // Get window title for debugging
+        if let title = WindowController.getTitle(window: windowElement) {
+            print("  📝 Window title: \"\(title)\"")
+        }
+
+        // Get window frame for drag simulation
+        guard let frame = WindowController.getFrame(window: windowElement) else {
+            print("  ❌ Could not get window frame")
+            return
+        }
+        print("  ✅ Window frame: \(frame)")
+
+        print("  → Calling spaceManager.moveWindowToSpaceNumber(\(cgWindowID), \(number), frame: \(frame))")
+        spaceManager.moveWindowToSpaceNumber(UInt64(cgWindowID), spaceNumber: number, windowFrame: frame)
+
+        // After moving, retile the current space
+        print("  → Calling performLayout() to retile")
+        observer.performLayout()
     }
 }
