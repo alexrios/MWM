@@ -11,7 +11,6 @@ This directory contains documentation for MWM (Mac Window Manager).
 - [Main README](../README.md) - Project overview, installation, and usage
 - [Keyboard Shortcuts](../HOTKEYS.md) - All available hotkeys
 - [Quick Start Guide](../QUICK_START.md) - Getting started with MWM
-- [Changelog](../CHANGELOG.md) - Version history
 
 ## Architecture Overview
 

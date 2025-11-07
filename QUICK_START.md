@@ -67,7 +67,6 @@ When prompted:
 
 - **[README.md](README.md)** - Full documentation
 - **[HOTKEYS.md](HOTKEYS.md)** - Complete shortcuts reference
-- **[CHANGELOG.md](CHANGELOG.md)** - Version history
 - **[docs/WINDOW_MOVEMENT_TEST_GUIDE.md](docs/WINDOW_MOVEMENT_TEST_GUIDE.md)** - Window movement testing
 
 ## Troubleshooting
