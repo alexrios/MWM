@@ -90,9 +90,6 @@ mwm/
 ├── build.zig             # Zig build configuration
 ├── Package.swift         # Swift package configuration
 ├── .mise.toml            # Tool versions and tasks
-├── docs/                 # Documentation
-│   ├── README.md         # Documentation index
-│   └── WINDOW_MOVEMENT_TEST_GUIDE.md
 ├── include/
 │   └── mwm_bridge.h      # C ABI header
 ├── src/                  # Zig source code
@@ -170,5 +167,3 @@ MWM integrates with macOS Spaces using a hybrid approach:
 **Note:** MWM uses keyboard shortcut simulation because CGS private switching APIs are non-functional on recent macOS versions, making this the most reliable cross-version approach.
 
 **Important:** Private APIs may change in future macOS versions. The core window management uses only public Accessibility APIs and will continue to work even if Space features are affected.
-
-For complete technical details about workspace implementation, see [docs/README.md](docs/README.md).

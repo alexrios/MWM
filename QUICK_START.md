@@ -67,7 +67,6 @@ When prompted:
 
 - **[README.md](README.md)** - Full documentation
 - **[HOTKEYS.md](HOTKEYS.md)** - Complete shortcuts reference
-- **[docs/WINDOW_MOVEMENT_TEST_GUIDE.md](docs/WINDOW_MOVEMENT_TEST_GUIDE.md)** - Window movement testing
 
 ## Troubleshooting
 
@@ -88,7 +87,6 @@ When prompted:
 ## Resources
 
 - GitHub Issues: Report problems
-- Testing Guide: `docs/WINDOW_MOVEMENT_TEST_GUIDE.md`
 
 ---
 
