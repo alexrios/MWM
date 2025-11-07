@@ -1,4 +1,4 @@
-# MWM
+![MWM-logo.png](MWM-logo.png)
 
 MWM (Mac Window Manager) is an experimental tiling window manager for macOS.
 
