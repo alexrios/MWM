@@ -1,6 +1,6 @@
 # MWM
 
-Tiling window manager for macOS. Implements window management logic in Zig with macOS integration in Swift.
+MWM (Mac Window Manager) is an experimental tiling window manager for macOS.
 
 ## Features
 
@@ -31,7 +31,7 @@ Tiling window manager for macOS. Implements window management logic in Zig with 
 └─────────────────────────────────────┘
 ```
 
-This separation deliberately keeps platform-agnostic tiling logic in Zig for portability to other window systems (X11, Wayland) while Swift handles macOS-specific APIs.
+> This separation deliberately keeps platform-agnostic tiling logic in Zig for portability to other window systems (X11, Wayland) while Swift handles macOS-specific APIs.
 
 ## Requirements
 
@@ -84,8 +84,8 @@ View logs in Console.app or run `mise run run` for terminal output. Logs include
 
 ```
 mwm/
-├── build.zig              # Zig build configuration
-├── Package.swift          # Swift package configuration
+├── build.zig             # Zig build configuration
+├── Package.swift         # Swift package configuration
 ├── .mise.toml            # Tool versions and tasks
 ├── include/
 │   └── mwm_bridge.h      # C ABI header
