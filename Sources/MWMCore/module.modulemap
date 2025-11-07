@@ -1,0 +1,5 @@
+module MWMCore {
+    header "../../include/mwm_bridge.h"
+    link "mwm-core"
+    export *
+}

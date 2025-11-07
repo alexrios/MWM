@@ -1,0 +1,52 @@
+[tools]
+zig = "0.15.2"
+
+[tasks.clean]
+description = "Clean build artifacts"
+run = "rm -rf .build zig-out .zig-cache"
+
+[tasks.zig]
+description = "Build Zig core library"
+run = "zig build -Doptimize=ReleaseSafe"
+
+[tasks.swift]
+description = "Build Swift application"
+depends = ["zig"]
+run = '''
+mkdir -p .build/lib
+cp zig-out/lib/libmwm-core.a .build/lib/
+swift build -Xlinker -L.build/lib -Xlinker -lmwm-core
+'''
+
+[tasks.build]
+description = "Build everything"
+depends = ["zig", "swift"]
+
+[tasks.run]
+description = "Run the application"
+depends = ["build"]
+run = ".build/arm64-apple-macosx/debug/mwm 2>/dev/null || .build/debug/mwm"
+
+[tasks.test]
+description = "Run automated hotkey tests"
+depends = ["build"]
+run = ".build/arm64-apple-macosx/debug/mwm --test 2>/dev/null || .build/debug/mwm --test"
+
+[tasks."test-zig"]
+description = "Run Zig unit tests"
+run = "zig build test"
+
+[tasks.dev]
+description = "Development build (debug mode)"
+depends = ["clean"]
+run = '''
+zig build
+mkdir -p .build/lib
+cp zig-out/lib/libmwm-core.a .build/lib/
+swift build -Xlinker -L.build/lib -Xlinker -lmwm-core
+'''
+
+[tasks.install]
+description = "Install MWM to /usr/local/bin"
+depends = ["build"]
+run = "cp .build/arm64-apple-macosx/debug/mwm /usr/local/bin/mwm 2>/dev/null || cp .build/debug/mwm /usr/local/bin/mwm"

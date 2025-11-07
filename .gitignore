@@ -1,0 +1,24 @@
+# Zig
+zig-out/
+zig-cache/
+.zig-cache/
+
+# Swift
+.build/
+.swiftpm/
+*.xcodeproj
+*.xcworkspace
+
+# macOS
+.DS_Store
+*.swp
+*.swo
+
+# IDE
+.vscode/
+.idea/
+
+# Build artifacts
+*.a
+*.o
+*.dylib
